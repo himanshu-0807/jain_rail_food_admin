@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "834477805625",
+    "project_id": "jainrailwayfooddelivery",
+    "storage_bucket": "jainrailwayfooddelivery.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834477805625:android:74cd1ad5615dc96cca7de8",
+        "android_client_info": {
+          "package_name": "com.example.railway_food_delivery_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChAkcUEKvhK5CgGo0YeQB8U66KzHvfN0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
