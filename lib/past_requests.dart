@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 class PastRequests extends StatefulWidget {
   const PastRequests({super.key});
@@ -15,7 +16,6 @@ class _PastRequestsState extends State<PastRequests> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Past Requests'),
-        backgroundColor: Colors.blueAccent,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream:
@@ -45,12 +45,12 @@ class _PastRequestsState extends State<PastRequests> {
 
   // Method to build the UI for each past request
   Widget _buildRequestCard(Map<String, dynamic> requestData) {
-    List<dynamic> cartItems = requestData['cartItems'];
-    String status = requestData['status'];
+    List<dynamic> cartItems = requestData['selectedItems'] ?? [];
+    String status = requestData['status'] ?? 'Unknown';
 
     return Card(
-      elevation: 5,
-      margin: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
+      elevation: 4,
+      margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.r),
       ),
@@ -59,31 +59,37 @@ class _PastRequestsState extends State<PastRequests> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Name:', requestData['name']),
-            _buildInfoRow('Phone:', requestData['phone']),
-            _buildInfoRow('Train Number:', requestData['trainNumber']),
-            _buildInfoRow('Compartment:', requestData['compartment']),
-            _buildInfoRow('Seat Number:', requestData['seatNumber']),
+            _buildInfoRow('Request Id', requestData['requestId']),
+            _buildInfoRow('Name:', requestData['name'] ?? 'N/A'),
+            _buildInfoRow('Phone:', requestData['phone'] ?? 'N/A'),
+            _buildInfoRow('Train No:', requestData['trainNumber'] ?? 'N/A'),
+            _buildInfoRow('Compartment:', requestData['compartment'] ?? 'N/A'),
+            _buildInfoRow('Seat No:', requestData['seatNumber'] ?? 'N/A'),
             SizedBox(height: 10.h),
-            Text('Cart Items:',
+            Text('Requested Items:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
             SizedBox(height: 10.h),
-            ...cartItems.map((item) {
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: Image.network(item['image'],
-                      width: 50.w, height: 50.h, fit: BoxFit.cover),
-                ),
-                title: Text(item['name'], style: TextStyle(fontSize: 14.sp)),
-                subtitle: Text('Quantity: ${item['quantity']}',
-                    style: TextStyle(fontSize: 12.sp)),
-              );
-            }).toList(),
+            if (cartItems.isNotEmpty)
+              ...cartItems.map((item) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(item['name'] ?? 'Unnamed',
+                          style: TextStyle(fontSize: 14.sp)),
+                      Text('Qty: ${item['quantity'] ?? 0}',
+                          style:
+                              TextStyle(fontSize: 12.sp, color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }).toList()
+            else
+              Text('No items in cart.'),
             SizedBox(height: 10.h),
             Text(
-              'Requested on: ${requestData['timestamp']?.toDate() ?? 'Unknown'}',
+              'Requested on: ${_formatTimestamp(requestData['timestamp'])}',
               style: TextStyle(fontSize: 12.sp, color: Colors.grey),
             ),
             SizedBox(height: 10.h),
@@ -95,6 +101,12 @@ class _PastRequestsState extends State<PastRequests> {
         ),
       ),
     );
+  }
+
+  // Helper method to format the timestamp
+  String _formatTimestamp(Timestamp timestamp) {
+    DateTime dateTime = timestamp.toDate();
+    return DateFormat('MMM d, yyyy h:mm a').format(dateTime); // 12-hour format
   }
 
   // Helper method to build the request detail rows

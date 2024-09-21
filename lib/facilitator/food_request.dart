@@ -17,7 +17,6 @@ class _FoodRequestState extends State<FoodRequest> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Food Requests'),
-        backgroundColor: Colors.blueAccent,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('requests').snapshots(),
@@ -46,7 +45,6 @@ class _FoodRequestState extends State<FoodRequest> {
 
   // Method to build the UI for each request
   Widget _buildRequestCard(Map<String, dynamic> requestData, String requestId) {
-    // Provide a default empty list if cartItems is null, expecting list of maps
     List<Map<String, dynamic>> cartItems =
         (requestData['selectedItems'] as List<dynamic>?)
                 ?.map((item) => item as Map<String, dynamic>)
@@ -54,8 +52,8 @@ class _FoodRequestState extends State<FoodRequest> {
             [];
 
     return Card(
-      elevation: 5,
-      margin: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
+      elevation: 4,
+      margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.r),
       ),
@@ -64,55 +62,69 @@ class _FoodRequestState extends State<FoodRequest> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Request ID: $requestId'),
+            Text('Request ID: $requestId',
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8.h),
             _buildInfoRow('Name:', requestData['name']),
             _buildInfoRow('Phone:', requestData['phone']),
-            _buildInfoRow('Train Number:', requestData['trainNumber']),
+            _buildInfoRow('Train No:', requestData['trainNumber']),
             _buildInfoRow('Compartment:', requestData['compartment']),
-            _buildInfoRow('Seat Number:', requestData['seatNumber']),
+            _buildInfoRow('Seat No:', requestData['seatNumber']),
             SizedBox(height: 10.h),
             Text('Requested Food:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
-            // Display each cart item with its quantity
             ...cartItems.map((item) {
               String foodName = item['name'] ?? 'Unknown';
               int quantity = item['quantity'] ?? 1;
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(foodName, style: TextStyle(fontSize: 14.sp)),
-                trailing: Text('Quantity: $quantity',
-                    style: TextStyle(fontSize: 14.sp, color: Colors.grey)),
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(foodName, style: TextStyle(fontSize: 14.sp)),
+                    Text('Qty: $quantity',
+                        style: TextStyle(fontSize: 14.sp, color: Colors.grey)),
+                  ],
+                ),
               );
-            }),
+            }).toList(),
             SizedBox(height: 10.h),
             Text(
               'Requested on: ${_formatTimestamp(requestData['timestamp'])}',
               style: TextStyle(fontSize: 12.sp, color: Colors.grey),
             ),
-            SizedBox(height: 20.h),
-            Text('Status: ${requestData['status']}'),
+            SizedBox(height: 16.h),
+            Text('Status: ${requestData['status']}',
+                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
+            SizedBox(height: 12.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
                   onPressed: () => _acceptRequest(requestId),
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
                     backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(50.r),
                     ),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                   ),
-                  child: Text('Accept'),
+                  child: Text('   Accept   '),
                 ),
                 ElevatedButton(
                   onPressed: () => _rejectRequest(requestId),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(50.r),
                     ),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                   ),
-                  child: Text('Reject'),
+                  child: Text('   Reject   '),
                 ),
               ],
             ),
@@ -153,35 +165,85 @@ class _FoodRequestState extends State<FoodRequest> {
 
   // Method to accept the request
   void _acceptRequest(String requestId) {
+    print('Starting _acceptRequest for requestId: $requestId'); // Debug print
+
     // Fetch the request document
     FirebaseFirestore.instance
         .collection('requests')
         .doc(requestId)
         .get()
         .then((snapshot) {
+      print(
+          'Fetched request snapshot for requestId: $requestId'); // Debug print
+
       if (snapshot.exists) {
-        // Extract device token of the user who placed the order
-        String userDeviceToken = snapshot.data()?['deviceToken'];
+        // Safely extract the status field with a null check
+        String? currentStatus = snapshot.data()?['status'] as String?;
+        if (currentStatus == null) {
+          print('Error: Request status is null or missing.'); // Debug print
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Request status is invalid.')),
+          );
+          return;
+        }
+        print('Current status of request: $currentStatus'); // Debug print
+
+        if (currentStatus == 'Dispatched') {
+          print('Order already accepted, exiting method.'); // Debug print
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Order already accepted')),
+          );
+          return;
+        }
+
+        // Safely extract the deviceToken field with a null check
+        String? userDeviceToken = snapshot.data()?['deviceToken'] as String?;
+        if (userDeviceToken == null) {
+          print('Error: User device token is null or missing.'); // Debug print
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('User device token is missing.')),
+          );
+          return;
+        }
+        print('User device token: $userDeviceToken'); // Debug print
 
         // Update the request status to 'Accepted'
         FirebaseFirestore.instance
             .collection('requests')
             .doc(requestId)
             .update({'status': 'Accepted'}).then((_) {
+          print('Request status updated to Accepted'); // Debug print
+
           // Fetch today's shifts to get device tokens
           FirebaseFirestore.instance
               .collection('todays_shifts')
               .doc('shifts')
               .get()
               .then((shiftsSnapshot) {
+            print('Fetched today\'s shifts data'); // Debug print
+
             if (shiftsSnapshot.exists) {
               var shiftsData = shiftsSnapshot.data();
 
-              // Get device tokens of chef and logistics
-              String chefDeviceToken =
-                  shiftsData?['active_chef']['deviceToken'];
-              String logisticsDeviceToken =
-                  shiftsData?['active_logistics']['deviceToken'];
+              // Safely extract the device tokens for chef and logistics
+              String? chefDeviceToken =
+                  shiftsData?['active_chef']?['deviceToken'] as String?;
+              String? logisticsDeviceToken =
+                  shiftsData?['active_logistics']?['deviceToken'] as String?;
+
+              if (chefDeviceToken == null || logisticsDeviceToken == null) {
+                print(
+                    'Error: Chef or Logistics device token is missing.'); // Debug print
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content:
+                          Text('Chef or Logistics device token is missing.')),
+                );
+                return;
+              }
+              print('Chef device token: $chefDeviceToken'); // Debug print
+              print(
+                  'Logistics device token: $logisticsDeviceToken'); // Debug print
 
               // Send notifications
               NotificationServices.sendNotificationToSelectedDriver(
@@ -200,25 +262,40 @@ class _FoodRequestState extends State<FoodRequest> {
                   'Request Accepted',
                   'Your request has been accepted.');
 
+              print('Notifications sent'); // Debug print
+
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Request accepted')),
               );
             } else {
-              print('No active shifts found');
+              print('No active shifts found'); // Debug print
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('No active shifts found.')),
+              );
             }
           }).catchError((error) {
-            print('Error fetching today\'s shifts: $error');
+            print('Error fetching today\'s shifts: $error'); // Debug print
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error fetching today\'s shifts.')),
+            );
           });
         }).catchError((error) {
+          print('Error updating request status: $error'); // Debug print
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error accepting request')),
+            SnackBar(content: Text('Error accepting request.')),
           );
         });
       } else {
-        print('Request not found');
+        print('Request not found'); // Debug print
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Request not found.')),
+        );
       }
     }).catchError((error) {
-      print('Error fetching request: $error');
+      print('Error fetching request: $error'); // Debug print
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching request.')),
+      );
     });
   }
 

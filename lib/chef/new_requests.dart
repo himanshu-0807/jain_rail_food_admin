@@ -16,15 +16,16 @@ class _NewChefRequestsState extends State<NewChefRequests> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('New Requests'),
-        backgroundColor: Colors.blueAccent,
+        title: Text(
+          'New Requests',
+          style: TextStyle(fontSize: 20.sp),
+        ),
+        backgroundColor: Colors.orangeAccent, // Updated color
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('requests')
-            .where('status',
-                isEqualTo:
-                    'Accepted') // Change this to 'New' or any other status for new requests
+            .where('status', isEqualTo: 'Accepted')
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -32,7 +33,7 @@ class _NewChefRequestsState extends State<NewChefRequests> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No new orders.'));
+            return Center(child: Text('No new requests available.'));
           }
 
           var orders = snapshot.data!.docs;
@@ -65,29 +66,34 @@ class _NewChefRequestsState extends State<NewChefRequests> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildInfoRow('Request Id:', orderData['requestId']),
             _buildInfoRow('Name:', orderData['name']),
             _buildInfoRow('Phone:', orderData['phone']),
             _buildInfoRow('Train Number:', orderData['trainNumber']),
             _buildInfoRow('Compartment:', orderData['compartment']),
             _buildInfoRow('Seat Number:', orderData['seatNumber']),
             SizedBox(height: 10.h),
-            Text('Cart Items:',
+            Text('Requested Food:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
             ...cartItems.map((item) {
-              // Handle cart item as a Map
               String foodName = item['name'] ?? 'Unknown';
               int quantity = item['quantity'] ?? 1;
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(foodName, style: TextStyle(fontSize: 14.sp)),
-                trailing: Text('Quantity: $quantity',
-                    style: TextStyle(fontSize: 12.sp)),
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(foodName, style: TextStyle(fontSize: 14.sp)),
+                    Text('Qty: $quantity',
+                        style: TextStyle(fontSize: 14.sp, color: Colors.grey)),
+                  ],
+                ),
               );
-            }),
+            }).toList(),
             SizedBox(height: 10.h),
             Text(
               "Status : ${orderData['status']}",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
             ),
             Text(
               'Requested on: ${_formatTimestamp(orderData['timestamp'])}',
@@ -97,26 +103,38 @@ class _NewChefRequestsState extends State<NewChefRequests> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
-                  onPressed: () => _updateOrderStatus(orderId, 'Dispatched'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.green, // Green color for "Dispatched"
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
+                SizedBox(
+                  width: 120.w,
+                  child: ElevatedButton(
+                    onPressed: () => _updateOrderStatus(orderId, 'Dispatched'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50.r),
+                      ),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                     ),
+                    child:
+                        Text('Dispatched', style: TextStyle(fontSize: 14.sp)),
                   ),
-                  child: Text('Dispatched'),
                 ),
-                ElevatedButton(
-                  onPressed: () => _updateOrderStatus(orderId, 'Rejected'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, // Red color for "Rejected"
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
+                SizedBox(
+                  width: 120.w,
+                  child: ElevatedButton(
+                    onPressed: () => _updateOrderStatus(orderId, 'Rejected'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50.r),
+                      ),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                     ),
+                    child: Text('Reject', style: TextStyle(fontSize: 14.sp)),
                   ),
-                  child: Text('Reject'),
                 ),
               ],
             ),
@@ -158,18 +176,15 @@ class _NewChefRequestsState extends State<NewChefRequests> {
   // Method to update the order status in Firestore
   Future<void> _updateOrderStatus(String orderId, String status) async {
     try {
-      // Fetch the request document to get the user's device token
       DocumentSnapshot requestSnapshot = await FirebaseFirestore.instance
           .collection('requests')
           .doc(orderId)
           .get();
 
       if (requestSnapshot.exists) {
-        // Extract the user's device token
         String userDeviceToken =
             (requestSnapshot.data() as Map<String, dynamic>)['deviceToken'];
 
-        // Fetch today's shifts to get the chef's device token
         DocumentSnapshot shiftsSnapshot = await FirebaseFirestore.instance
             .collection('todays_shifts')
             .doc('shifts')
@@ -178,13 +193,11 @@ class _NewChefRequestsState extends State<NewChefRequests> {
         String active_logistics = (shiftsSnapshot.data()
             as Map<String, dynamic>)['active_logistics']['deviceToken'];
 
-        // Update order status
         await FirebaseFirestore.instance
             .collection('requests')
             .doc(orderId)
             .update({'status': status});
 
-        // Send notifications
         NotificationServices.sendNotificationToSelectedDriver(active_logistics,
             context, 'Order Status Updated', 'The order has been dispatched.');
         NotificationServices.sendNotificationToSelectedDriver(userDeviceToken,

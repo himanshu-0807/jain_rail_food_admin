@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:railway_food_delivery_admin/notification_services.dart';
 
 class ManageShifts extends StatefulWidget {
@@ -71,6 +72,7 @@ class _ManageShiftsState extends State<ManageShifts> {
   // Function to handle submitting the shifts to Firestore
   Future<void> submitShifts(
       String facilitatorId, String chefId, String logisticsId) async {
+    // Fetch the selected users' data
     final facilitator = await FirebaseFirestore.instance
         .collection('admin_users')
         .doc(facilitatorId)
@@ -83,6 +85,24 @@ class _ManageShiftsState extends State<ManageShifts> {
         .collection('admin_users')
         .doc(logisticsId)
         .get();
+
+    // Check if any user has an empty device token
+    if (facilitator['deviceToken'] == null ||
+        facilitator['deviceToken'] == '' ||
+        chef['deviceToken'] == null ||
+        chef['deviceToken'] == '' ||
+        logistics['deviceToken'] == null ||
+        logistics['deviceToken'] == '') {
+      // Show error message if any device token is missing
+      IconSnackBar.show(
+        context,
+        label: 'Unverified User Selected !!',
+        snackBarType: SnackBarType.fail,
+      );
+
+      // Prevent the operation from proceeding
+      return;
+    }
 
     final Map<String, dynamic> todaysShifts = {
       'active_facilitator': {
@@ -102,6 +122,7 @@ class _ManageShiftsState extends State<ManageShifts> {
       }
     };
 
+    // Send notifications to the assigned users
     NotificationServices.sendNotificationToSelectedDriver(
         facilitator['deviceToken'],
         context,
@@ -110,12 +131,14 @@ class _ManageShiftsState extends State<ManageShifts> {
 
     NotificationServices.sendNotificationToSelectedDriver(chef['deviceToken'],
         context, 'Update !!', 'You are assigned as Chef for today');
+
     NotificationServices.sendNotificationToSelectedDriver(
         logistics['deviceToken'],
         context,
         'Update !!',
         'You are assigned as Logistics for today');
 
+    // Update the 'todays_shifts' collection
     await FirebaseFirestore.instance
         .collection('todays_shifts')
         .doc('shifts')
@@ -243,19 +266,33 @@ class _ManageShiftsState extends State<ManageShifts> {
                       },
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        onPressed: selectedFacilitator != null &&
-                                selectedChef != null &&
-                                selectedLogistics != null
-                            ? () {
-                                submitShifts(selectedFacilitator!,
-                                    selectedChef!, selectedLogistics!);
-                              }
-                            : null,
-                        child: const Text('Submit Shifts'),
-                      ),
-                    ),
+                        padding: const EdgeInsets.all(10.0),
+                        child: InkWell(
+                          onTap: selectedFacilitator != null &&
+                                  selectedChef != null &&
+                                  selectedLogistics != null
+                              ? () {
+                                  submitShifts(selectedFacilitator!,
+                                      selectedChef!, selectedLogistics!);
+                                }
+                              : null,
+                          child: Container(
+                            child: Center(
+                              child: Text(
+                                'Submit Shifts',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 17.sp,
+                                    color: Colors.white),
+                              ),
+                            ),
+                            width: double.infinity,
+                            height: 50.h,
+                            decoration: BoxDecoration(
+                                color: Colors.orange,
+                                borderRadius: BorderRadius.circular(15.r)),
+                          ),
+                        )),
                   ],
                 ),
               );
@@ -299,10 +336,8 @@ class SectionWidget extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  TextButton(
-                    onPressed: onEditPressed,
-                    child: const Text('Edit'),
-                  ),
+                  IconButton(
+                      onPressed: onEditPressed, icon: const Icon(Icons.edit)),
                 ],
               ),
             ),

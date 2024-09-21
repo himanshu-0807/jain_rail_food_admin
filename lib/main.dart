@@ -19,20 +19,50 @@ void main() async {
   runApp(MyApp());
 }
 
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Handling a background message: ${message.messageId}');
-  // Handle background message UI updates or actions here
-}
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(
-          360, 690), // Design size of the screen (update based on your design)
+      designSize: const Size(360, 690), // Design size of the screen
       minTextAdapt: true,
       builder: (context, child) {
         return MaterialApp(
+          theme: ThemeData(
+            textButtonTheme: TextButtonThemeData(
+              style: ButtonStyle(
+                foregroundColor:
+                    MaterialStateProperty.all(Colors.black), // Set to black
+              ),
+            ),
+            floatingActionButtonTheme: FloatingActionButtonThemeData(
+                backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            appBarTheme: AppBarTheme(
+              titleTextStyle: TextStyle(
+                fontSize: 20.sp,
+                color: Colors.white,
+              ),
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.orange,
+            ),
+            checkboxTheme: CheckboxThemeData(
+              checkColor: WidgetStateProperty.all(
+                  Colors.white), // Color of the check mark
+              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return Colors.orange; // Color of the checkbox when checked
+                }
+                return Colors.white; // Color of the checkbox when unchecked
+              }),
+            ),
+            tabBarTheme: TabBarTheme(
+              indicatorColor: Colors.white,
+              labelColor: Colors.white, // Color of the selected tab text
+              unselectedLabelColor:
+                  Colors.white54, // Color of the unselected tab text
+            ),
+          ),
           debugShowCheckedModeBanner: false,
           home: LoginPage(),
         );

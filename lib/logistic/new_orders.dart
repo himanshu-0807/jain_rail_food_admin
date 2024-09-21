@@ -16,8 +16,7 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Orders'),
-        backgroundColor: Colors.blueAccent,
+        title: Text('Requests'),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -62,6 +61,7 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildInfoRow('Request Id:', orderData['requestId']),
             _buildInfoRow('Name:', orderData['name']),
             _buildInfoRow('Phone:', orderData['phone']),
             _buildInfoRow('Train Number:', orderData['trainNumber']),
@@ -70,14 +70,19 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
             SizedBox(height: 10.h),
             Text('Requested Food:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10.h),
             ...cartItems.map((item) {
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(item['name'] ?? 'Unknown',
-                    style: TextStyle(fontSize: 14.sp)),
-                trailing: Text('Quantity: ${item['quantity'] ?? 1}',
-                    style: TextStyle(fontSize: 12.sp)),
+              String foodName = item['name'] ?? 'Unknown';
+              int quantity = item['quantity'] ?? 1;
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(foodName, style: TextStyle(fontSize: 14.sp)),
+                    Text('Qty: $quantity',
+                        style: TextStyle(fontSize: 14.sp, color: Colors.grey)),
+                  ],
+                ),
               );
             }).toList(),
             SizedBox(height: 10.h),
@@ -87,13 +92,16 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
             ),
             SizedBox(height: 10.h),
             Text('Status: ${orderData['status']}'),
+            SizedBox(height: 10.h),
             ElevatedButton(
               onPressed: () => _updateOrderStatus(orderId, orderData),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // Green color for "Delivered"
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.green,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(50.r),
                 ),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               ),
               child: Text('Delivered'),
             ),
@@ -139,58 +147,70 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
       print('Starting order status update process for order ID: $orderId');
       print('Original Order data: $orderData');
 
-      // Update the status in the orderData map
-      orderData['status'] = 'Delivered';
-
-      // Fetch the request document to get the user's device token
+      // Fetch the request document to get the current status and user's device token
       DocumentSnapshot requestSnapshot = await FirebaseFirestore.instance
           .collection('requests')
           .doc(orderId)
           .get();
 
       if (requestSnapshot.exists) {
-        // Extract the user's device token
-        String userDeviceToken =
-            (requestSnapshot.data() as Map<String, dynamic>)['deviceToken'];
+        // Extract the order's current status and user's device token
+        Map<String, dynamic> requestData =
+            requestSnapshot.data() as Map<String, dynamic>;
+        String currentStatus = requestData['status'];
+        String userDeviceToken = requestData['deviceToken'];
 
-        // First, update the status to 'Delivered' in the 'requests' collection
-        print('Updating status to "Delivered" in "requests" collection...');
-        await FirebaseFirestore.instance
-            .collection('requests')
-            .doc(orderId)
-            .update({'status': 'Delivered'});
-        print('Status updated successfully in requests.');
+        // Check if the current status is 'Dispatched'
+        if (currentStatus == 'Dispatched') {
+          // Proceed with marking the order as 'Delivered'
+          orderData['status'] = 'Delivered';
 
-        // Move the updated order data to 'pastRequests' collection
-        print(
-            'Moving order data with updated status to "pastRequests" collection...');
-        await FirebaseFirestore.instance
-            .collection('pastRequests')
-            .doc(orderId)
-            .set(orderData);
-        print('Order data moved successfully to pastRequests.');
+          // Update the status to 'Delivered' in the 'requests' collection
+          print('Updating status to "Delivered" in "requests" collection...');
+          await FirebaseFirestore.instance
+              .collection('requests')
+              .doc(orderId)
+              .update({'status': 'Delivered'});
+          print('Status updated successfully in requests.');
 
-        // Remove the order from the 'requests' collection
-        print('Removing order from "requests" collection...');
-        await FirebaseFirestore.instance
-            .collection('requests')
-            .doc(orderId)
-            .delete();
-        print('Order removed successfully from requests.');
+          // Move the updated order data to the 'pastRequests' collection
+          print(
+              'Moving order data with updated status to "pastRequests" collection...');
+          await FirebaseFirestore.instance
+              .collection('pastRequests')
+              .doc(orderId)
+              .set(orderData);
+          print('Order data moved successfully to pastRequests.');
 
-        // Send notification to the user
-        NotificationServices.sendNotificationToSelectedDriver(
-            userDeviceToken,
-            context,
-            'Order Status Update',
-            'Your order has been delivered successfully');
+          // Remove the order from the 'requests' collection
+          print('Removing order from "requests" collection...');
+          await FirebaseFirestore.instance
+              .collection('requests')
+              .doc(orderId)
+              .delete();
+          print('Order removed successfully from requests.');
 
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order marked as Delivered'),
-          ),
-        );
+          // Send notification to the user
+          NotificationServices.sendNotificationToSelectedDriver(
+              userDeviceToken,
+              context,
+              'Order Status Update',
+              'Your order has been delivered successfully.');
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Order marked as Delivered'),
+            ),
+          );
+        } else {
+          // If the status is not 'Dispatched', show a message that it's yet to be dispatched
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Order yet to be dispatched'),
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

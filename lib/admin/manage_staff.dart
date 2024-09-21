@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 class ManageStaff extends StatefulWidget {
   const ManageStaff({super.key});
@@ -29,7 +31,6 @@ class _ManageStaffState extends State<ManageStaff> {
     });
   }
 
-  // Function to save staff details to Firestore
   Future<void> _saveStaffToFirestore() async {
     String email = _emailController.text;
     String password = _passwordController.text;
@@ -315,7 +316,61 @@ class _ManageStaffState extends State<ManageStaff> {
                   DocumentSnapshot staff = snapshot.data!.docs[index];
 
                   return ListTile(
-                    title: Text(staff['name']),
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Details of ${staff['name']}'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text('Ok'))
+                              ],
+                              content: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Name : ${staff['name']}'),
+                                  Text('Email : ${staff['email']}'),
+                                  Text('Phone : ${staff['phone']}'),
+                                  Text('Role : ${staff['role']}'),
+                                  Text(
+                                      'Created at : ${DateFormat('dd-MM-yyyy – hh:mm a').format((staff['createdAt'] as Timestamp).toDate())}'),
+                                ],
+                              ),
+                            );
+                          });
+                    },
+                    title: staff['deviceToken'] == ''
+                        ? Row(
+                            children: [
+                              Text(
+                                staff['name'],
+                              ),
+                              SizedBox(
+                                width: 20.w,
+                              ),
+                              Container(
+                                height: 22.h,
+                                width: 70.w,
+                                decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(5)),
+                                child: Center(
+                                    child: Text(
+                                  'Unverified',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold),
+                                )),
+                              )
+                            ],
+                          )
+                        : Text(staff['name']),
                     subtitle: Text('${staff['role']} | ${staff['phone']}'),
                     trailing: PopupMenuButton(
                       onSelected: (value) {
