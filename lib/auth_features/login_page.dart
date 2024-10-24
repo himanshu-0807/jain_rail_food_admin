@@ -2,11 +2,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:railway_food_delivery_admin/admin/admin_home.dart';
 import 'package:railway_food_delivery_admin/chef/chef_home.dart';
 import 'package:railway_food_delivery_admin/facilitator/facilitator_home.dart';
 import 'package:railway_food_delivery_admin/logistic/logistics_home.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:railway_food_delivery_admin/main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -31,6 +34,47 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       print("Attempting to log in with email: ${_emailController.text}");
+
+      // Check and request notification permission
+      bool permissionGranted = false;
+
+      while (!permissionGranted) {
+        PermissionStatus status = await Permission.notification.request();
+
+        if (status.isDenied) {
+          print("Notification permission denied.");
+          // Show an alert to inform the user that notifications are necessary
+          await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Notification Permission Required'),
+                content: const Text(
+                    'This app requires notification permission to continue. Please allow notifications to proceed.'),
+                actions: [
+                  TextButton(
+                    child: const Text('Open Settings'),
+                    onPressed: () async {
+                      // Open app settings if the permission is permanently denied
+                      await openAppSettings();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        } else if (status.isGranted) {
+          print("Notification permission granted.");
+          permissionGranted = true; // Exit the loop if permission is granted
+        } else if (status.isPermanentlyDenied) {
+          print(
+              "Notification permission permanently denied. Opening settings.");
+          // If permission is permanently denied, open the app settings
+          await openAppSettings();
+        }
+      }
+
+      // After notification permission is granted, proceed with login
       UserCredential? userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
@@ -40,16 +84,16 @@ class _LoginPageState extends State<LoginPage> {
         String userEmail = userCredential.user!.email!;
         print("Login successful. User email: $userEmail");
 
+        // Get and update the Firebase device token
         _firebaseMessaging.getToken().then((token) async {
           print("Firebase Token: $token");
           await FirebaseFirestore.instance
               .collection('admin_users')
               .doc(userEmail)
               .update({'deviceToken': token});
-          print("Device token updated in Firestore.");
         });
 
-        // Fetch user role
+        // Fetch user role and navigate based on it
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('admin_users')
             .doc(userEmail)
@@ -59,46 +103,39 @@ class _LoginPageState extends State<LoginPage> {
           String role = userDoc['role'];
           print("User role: $role");
 
-          // Redirect based on the role
+          // Redirect user based on their role
           if (role == 'Admin') {
             print("Redirecting to AdminHome");
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => AdminHome()));
+            naviWithReplace(context, AdminHome());
           } else if (role == 'Chef') {
             print("Redirecting to ChefHome");
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => ChefHome()));
+            naviWithReplace(context, ChefHome());
           } else if (role == 'Facilitator') {
             print("Redirecting to FacilitatorHome");
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => FacilitatorHome()));
+            naviWithReplace(context, FacilitatorHome());
           } else if (role == 'Logistics') {
             print("Redirecting to LogisticsHome");
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => LogisticsHome()));
+            naviWithReplace(context, LogisticsHome());
           } else {
             print("Invalid role");
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Invalid role')),
-            );
+            IconSnackBar.show(context,
+                label: 'Invalid Role', snackBarType: SnackBarType.fail);
           }
         } else {
           print("User document does not exist");
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('User not found')),
-          );
+          IconSnackBar.show(context,
+              label: 'User not found', snackBarType: SnackBarType.fail);
         }
       } else {
         print("Login failed: User not found");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login failed: User not found')),
-        );
+        IconSnackBar.show(context,
+            label: 'Login failed: User not found',
+            snackBarType: SnackBarType.fail);
       }
     } on FirebaseAuthException catch (e) {
       print("Login failed: ${e.message}");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: ${e.message}')),
-      );
+      IconSnackBar.show(context,
+          label: 'Login failed: ${e.message}', snackBarType: SnackBarType.fail);
     } finally {
       setState(() {
         _isLoading = false;
@@ -209,20 +246,16 @@ class _LoginPageState extends State<LoginPage> {
                                 );
 
                                 // Notify the user that the reset email has been sent
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Password reset email sent!'),
-                                  ),
-                                );
+                                IconSnackBar.show(context,
+                                    label: 'Password reset email sent!',
+                                    snackBarType: SnackBarType.success);
                                 Navigator.of(context).pop(); // Close the dialog
                               } catch (e) {
                                 // Handle error (e.g., invalid email)
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        'Failed to send password reset email'),
-                                  ),
-                                );
+                                IconSnackBar.show(context,
+                                    label:
+                                        'Failed to send password reset email',
+                                    snackBarType: SnackBarType.fail);
                               }
                             },
                             child: Text('Send'),

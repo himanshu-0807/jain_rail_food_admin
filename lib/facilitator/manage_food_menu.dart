@@ -255,12 +255,9 @@ class _TodaysMenuPageState extends State<TodaysMenuPage> {
                             .doc(item.id)
                             .delete();
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Item deleted successfully!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                        IconSnackBar.show(context,
+                            label: 'Item deleted successfully!',
+                            snackBarType: SnackBarType.success);
                       }
                     },
                   );
@@ -306,12 +303,9 @@ class _TodaysMenuPageState extends State<TodaysMenuPage> {
         _selectAll = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Selected items deleted successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      IconSnackBar.show(context,
+          label: 'Selected items deleted successfully!',
+          snackBarType: SnackBarType.success);
     }
   }
 }

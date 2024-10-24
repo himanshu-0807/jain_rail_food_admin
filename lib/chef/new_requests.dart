@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:railway_food_delivery_admin/notification_services.dart'; // Import the intl package
@@ -66,12 +67,19 @@ class _NewChefRequestsState extends State<NewChefRequests> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Request Id:', orderData['requestId']),
-            _buildInfoRow('Name:', orderData['name']),
-            _buildInfoRow('Phone:', orderData['phone']),
-            _buildInfoRow('Train Number:', orderData['trainNumber']),
-            _buildInfoRow('Compartment:', orderData['compartment']),
-            _buildInfoRow('Seat Number:', orderData['seatNumber']),
+            _buildInfoRow('Request Id', orderData['requestId']),
+            _buildInfoRow('Name', orderData['name']),
+            _buildInfoRow('Phone', orderData['phone']),
+            _buildInfoRow('Train Number', orderData['trainNumber']),
+            _buildInfoRow('Compartment', orderData['compartment']),
+            _buildInfoRow('Seat Number', orderData['seatNumber']),
+            _buildInfoRow('Arrival Station', orderData['station']),
+            _buildInfoRow('Arrival Time', orderData['arrivalTime']),
+            _buildInfoRow(
+                'Special Request',
+                orderData['specialRequest'] == ''
+                    ? 'No Special Request'
+                    : orderData['specialRequest']),
             SizedBox(height: 10.h),
             Text('Requested Food:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
@@ -147,17 +155,27 @@ class _NewChefRequestsState extends State<NewChefRequests> {
   // Helper method to build the order detail rows
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align the text at the top
         children: [
           Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+            '$label: ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 14.sp),
+          Flexible(
+            child: Text(
+              value,
+              softWrap: true, // Allows the text to wrap to a new line
+              maxLines: null, // No limit on the number of lines
+              style: TextStyle(
+                color: Colors.black, // Customize text style if needed
+              ),
+            ),
           ),
         ],
       ),
@@ -203,24 +221,17 @@ class _NewChefRequestsState extends State<NewChefRequests> {
         NotificationServices.sendNotificationToSelectedDriver(userDeviceToken,
             context, 'Order Status Updated', 'The order has been dispatched.');
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order status updated to $status'),
-          ),
-        );
+        IconSnackBar.show(context,
+            label: 'Order status updated to $status',
+            snackBarType: SnackBarType.success);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order not found'),
-          ),
-        );
+        IconSnackBar.show(context,
+            label: 'Order not found', snackBarType: SnackBarType.fail);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to update order status'),
-        ),
-      );
+      IconSnackBar.show(context,
+          label: 'Failed to update order status',
+          snackBarType: SnackBarType.fail);
     }
   }
 }

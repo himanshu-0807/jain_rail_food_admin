@@ -70,6 +70,13 @@ class _OngoingRequestState extends State<OngoingRequest> {
             _buildInfoRow('Train No:', requestData['trainNumber']),
             _buildInfoRow('Compartment:', requestData['compartment']),
             _buildInfoRow('Seat No:', requestData['seatNumber']),
+            _buildInfoRow('Arrival Station:', requestData['station']),
+            _buildInfoRow('Arrival Time:', requestData['arrivalTime']),
+            _buildInfoRow(
+                'Special Request',
+                requestData['specialRequest'] == ''
+                    ? 'No Special Request'
+                    : requestData['specialRequest']),
             SizedBox(height: 10.h),
             Text('Requested Food:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
@@ -106,22 +113,32 @@ class _OngoingRequestState extends State<OngoingRequest> {
   // Helper method to build the request detail rows
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align the text at the top
         children: [
           Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+            '$label ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 14.sp),
+          Flexible(
+            child: Text(
+              value,
+              softWrap: true, // Allows the text to wrap to a new line
+              maxLines: null, // No limit on the number of lines
+              style: TextStyle(
+                color: Colors.black, // Customize text style if needed
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+
 
   // Method to format the timestamp in 12-hour format
   String _formatTimestamp(Timestamp? timestamp) {

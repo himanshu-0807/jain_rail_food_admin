@@ -16,7 +16,6 @@ class _ManageShiftsState extends State<ManageShifts> {
   String? selectedChef;
   String? selectedLogistics;
 
-  // Fetch users from Firestore
   Future<Map<String, List<Map<String, dynamic>>>> fetchUsersByRole() async {
     final QuerySnapshot snapshot =
         await FirebaseFirestore.instance.collection('admin_users').get();

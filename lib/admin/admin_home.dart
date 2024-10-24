@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:railway_food_delivery_admin/admin/manage_shifts.dart';
 import 'package:railway_food_delivery_admin/admin/manage_staff.dart';
+import 'package:railway_food_delivery_admin/main.dart';
 
 import '../past_requests.dart';
 import 'ongoing_req.dart';
@@ -66,20 +67,16 @@ class _AdminHomeState extends State<AdminHome> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
-                leading: const Icon(Icons.group, color: Colors.orange),
-                title: const Text(
-                  'Total Staff',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('Total Staff Count: 10'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ManageStaff()),
-                  );
-                },
-              ),
+                  leading: const Icon(Icons.group, color: Colors.orange),
+                  title: const Text(
+                    'Total Staff',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: const Text('Add and manage staff members'),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () {
+                    navi(context, ManageStaff());
+                  }),
             ),
             const SizedBox(height: 16),
             Card(
@@ -96,10 +93,7 @@ class _AdminHomeState extends State<AdminHome> {
                 subtitle: const Text('Edit and manage staff shifts'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ManageShifts()),
-                  );
+                  navi(context, ManageShifts());
                 },
               ),
             ),
@@ -118,12 +112,7 @@ class _AdminHomeState extends State<AdminHome> {
                 subtitle: const Text('View current food requests'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            OngoingRequest()), // Update with actual page
-                  );
+                  navi(context, OngoingRequest());
                 },
               ),
             ),
@@ -142,12 +131,7 @@ class _AdminHomeState extends State<AdminHome> {
                 subtitle: const Text('Check past food requests'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            PastRequests()), // Update with actual page
-                  );
+                  navi(context, PastRequests());
                 },
               ),
             ),

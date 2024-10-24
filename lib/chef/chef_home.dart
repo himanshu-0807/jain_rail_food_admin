@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:railway_food_delivery_admin/chef/new_requests.dart';
+import 'package:railway_food_delivery_admin/main.dart';
 import 'package:railway_food_delivery_admin/past_requests.dart';
 
 class ChefHome extends StatefulWidget {
@@ -105,10 +106,7 @@ class _ChefHomeState extends State<ChefHome> {
                 subtitle: const Text('View and handle incoming requests'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => NewChefRequests()),
-                  );
+                  navi(context, NewChefRequests());
                 },
               ),
             ),
@@ -128,12 +126,7 @@ class _ChefHomeState extends State<ChefHome> {
                 subtitle: const Text('View and check past orders'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            PastRequests()), // Navigate to past orders page
-                  );
+                  navi(context, PastRequests());
                 },
               ),
             ),

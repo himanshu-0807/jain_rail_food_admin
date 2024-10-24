@@ -45,6 +45,8 @@ dependencies:
   intl:
   googleapis:
   googleapis_auth:
+  flutter_local_notifications: ^17.2.3
+  permission_handler: ^11.3.1
 
 
 

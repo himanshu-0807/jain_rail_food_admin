@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:railway_food_delivery_admin/notification_services.dart'; // Import the intl package
@@ -70,6 +71,13 @@ class _FoodRequestState extends State<FoodRequest> {
             _buildInfoRow('Train No:', requestData['trainNumber']),
             _buildInfoRow('Compartment:', requestData['compartment']),
             _buildInfoRow('Seat No:', requestData['seatNumber']),
+            _buildInfoRow('Arrival Station:', requestData['station']),
+            _buildInfoRow('Arrival Time:', requestData['arrivalTime']),
+            _buildInfoRow(
+                'Special Request',
+                requestData['specialRequest'] == ''
+                    ? 'No Special Request'
+                    : requestData['specialRequest']),
             SizedBox(height: 10.h),
             Text('Requested Food:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
@@ -137,17 +145,27 @@ class _FoodRequestState extends State<FoodRequest> {
   // Helper method to build the request detail rows
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align the text at the top
         children: [
           Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+            '$label ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 14.sp),
+          Flexible(
+            child: Text(
+              value,
+              softWrap: true, // Allows the text to wrap to a new line
+              maxLines: null, // No limit on the number of lines
+              style: TextStyle(
+                color: Colors.black, // Customize text style if needed
+              ),
+            ),
           ),
         ],
       ),
@@ -181,18 +199,18 @@ class _FoodRequestState extends State<FoodRequest> {
         String? currentStatus = snapshot.data()?['status'] as String?;
         if (currentStatus == null) {
           print('Error: Request status is null or missing.'); // Debug print
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Request status is invalid.')),
-          );
+          IconSnackBar.show(context,
+              label: 'Request status is invalid.',
+              snackBarType: SnackBarType.fail);
           return;
         }
         print('Current status of request: $currentStatus'); // Debug print
 
         if (currentStatus == 'Dispatched') {
           print('Order already accepted, exiting method.'); // Debug print
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Order already accepted')),
-          );
+          IconSnackBar.show(context,
+              label: 'Order already accepted',
+              snackBarType: SnackBarType.alert);
           return;
         }
 
@@ -200,9 +218,9 @@ class _FoodRequestState extends State<FoodRequest> {
         String? userDeviceToken = snapshot.data()?['deviceToken'] as String?;
         if (userDeviceToken == null) {
           print('Error: User device token is null or missing.'); // Debug print
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('User device token is missing.')),
-          );
+          IconSnackBar.show(context,
+              label: 'User device token is missing.',
+              snackBarType: SnackBarType.fail);
           return;
         }
         print('User device token: $userDeviceToken'); // Debug print
@@ -234,11 +252,9 @@ class _FoodRequestState extends State<FoodRequest> {
               if (chefDeviceToken == null || logisticsDeviceToken == null) {
                 print(
                     'Error: Chef or Logistics device token is missing.'); // Debug print
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content:
-                          Text('Chef or Logistics device token is missing.')),
-                );
+                IconSnackBar.show(context,
+                    label: 'Chef or Logistics device token is missing.',
+                    snackBarType: SnackBarType.fail);
                 return;
               }
               print('Chef device token: $chefDeviceToken'); // Debug print
@@ -263,39 +279,36 @@ class _FoodRequestState extends State<FoodRequest> {
                   'Your request has been accepted.');
 
               print('Notifications sent'); // Debug print
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Request accepted')),
-              );
+              IconSnackBar.show(context,
+                  label: 'Request accepted',
+                  snackBarType: SnackBarType.success);
             } else {
               print('No active shifts found'); // Debug print
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('No active shifts found.')),
-              );
+              IconSnackBar.show(context,
+                  label: 'No active shifts found.',
+                  snackBarType: SnackBarType.alert);
             }
           }).catchError((error) {
             print('Error fetching today\'s shifts: $error'); // Debug print
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error fetching today\'s shifts.')),
-            );
+            IconSnackBar.show(context,
+                label: 'Error fetching today\'s shifts.',
+                snackBarType: SnackBarType.fail);
           });
         }).catchError((error) {
           print('Error updating request status: $error'); // Debug print
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error accepting request.')),
-          );
+          IconSnackBar.show(context,
+              label: 'Error accepting request.',
+              snackBarType: SnackBarType.fail);
         });
       } else {
         print('Request not found'); // Debug print
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Request not found.')),
-        );
+        IconSnackBar.show(context,
+            label: 'Request not found.', snackBarType: SnackBarType.fail);
       }
     }).catchError((error) {
       print('Error fetching request: $error'); // Debug print
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching request.')),
-      );
+      IconSnackBar.show(context,
+          label: 'Error fetching request.', snackBarType: SnackBarType.fail);
     });
   }
 
@@ -309,11 +322,9 @@ class _FoodRequestState extends State<FoodRequest> {
         .get()
         .then((snapshot) {
       if (snapshot.exists) {
-        // Access the request data
         final requestData = snapshot.data();
         String deviceToken = requestData?['deviceToken'];
 
-        // Print the device token
         print('Device Token: $deviceToken');
 
         // Show alert dialog to enter rejection reason
@@ -367,20 +378,20 @@ class _FoodRequestState extends State<FoodRequest> {
                           'Sorry!! Request Rejected',
                           rejectionReason,
                         );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Request rejected')),
-                        );
+                        IconSnackBar.show(context,
+                            label: 'Request rejected',
+                            snackBarType: SnackBarType.success);
                       }).catchError((error) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error processing request')),
-                        );
+                        IconSnackBar.show(context,
+                            label: 'Error processing request',
+                            snackBarType: SnackBarType.fail);
                       });
                       Navigator.of(context)
                           .pop(); // Close the dialog after submission
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please enter a reason')),
-                      );
+                      IconSnackBar.show(context,
+                          label: 'Please enter a reason',
+                          snackBarType: SnackBarType.alert);
                     }
                   },
                   child: const Text('Reject'),

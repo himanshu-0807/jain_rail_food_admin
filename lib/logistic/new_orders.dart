@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:railway_food_delivery_admin/notification_services.dart'; // Import the intl package
@@ -67,6 +68,13 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
             _buildInfoRow('Train Number:', orderData['trainNumber']),
             _buildInfoRow('Compartment:', orderData['compartment']),
             _buildInfoRow('Seat Number:', orderData['seatNumber']),
+            _buildInfoRow('Arrival Station:', orderData['station']),
+            _buildInfoRow('Arrival Time:', orderData['arrivalTime']),
+            _buildInfoRow(
+                'Special Request',
+                orderData['specialRequest'] == ''
+                    ? 'No Special Request'
+                    : orderData['specialRequest']),
             SizedBox(height: 10.h),
             Text('Requested Food:',
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
@@ -114,17 +122,27 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
   // Helper method to build the order detail rows
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align the text at the top
         children: [
           Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+            '$label ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 14.sp),
+          Flexible(
+            child: Text(
+              value,
+              softWrap: true, // Allows the text to wrap to a new line
+              maxLines: null, // No limit on the number of lines
+              style: TextStyle(
+                color: Colors.black, // Customize text style if needed
+              ),
+            ),
           ),
         ],
       ),
@@ -198,33 +216,24 @@ class _NewLogisticsRequestsState extends State<NewLogisticsRequests> {
               'Your order has been delivered successfully.');
 
           // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Order marked as Delivered'),
-            ),
-          );
+          IconSnackBar.show(context,
+              label: 'Order marked as Delivered',
+              snackBarType: SnackBarType.success);
         } else {
           // If the status is not 'Dispatched', show a message that it's yet to be dispatched
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Order yet to be dispatched'),
-            ),
-          );
+          IconSnackBar.show(context,
+              label: 'Order yet to be dispatched',
+              snackBarType: SnackBarType.alert);
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order not found'),
-          ),
-        );
+        IconSnackBar.show(context,
+            label: 'Order not found', snackBarType: SnackBarType.fail);
       }
     } catch (e) {
       print('Error occurred while updating order status: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to update order status'),
-        ),
-      );
+      IconSnackBar.show(context,
+          label: 'Failed to update order status',
+          snackBarType: SnackBarType.fail);
     }
   }
 }

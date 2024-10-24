@@ -49,11 +49,14 @@ class NotificationServices {
           'https://fcm.googleapis.com/v1/projects/jainrailwayfooddelivery/messages:send';
 
       final Map<String, dynamic> message = {
-        'message': {
-          'token': token,
-          'notification': {'title': title, 'body': body}
+        'to': token,
+        'data': {
+          'title': title,
+          'body': body,
+          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
         }
       };
+
 
       final http.Response response = await http.post(
         Uri.parse(endpointFirebaseCloudMessaging),

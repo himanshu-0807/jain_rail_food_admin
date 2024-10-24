@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:railway_food_delivery_admin/facilitator/food_request.dart';
 import 'package:railway_food_delivery_admin/facilitator/manage_food_menu.dart';
+import 'package:railway_food_delivery_admin/main.dart';
 import 'package:railway_food_delivery_admin/past_requests.dart';
 
 class FacilitatorHome extends StatefulWidget {
@@ -24,13 +25,21 @@ class _FacilitatorHomeState extends State<FacilitatorHome> {
     fetchUser();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.notification != null) {
+      print('Received a message in the foreground');
+
+      if (message.data.isNotEmpty) {
+        print('Data: ${message.data}');
+
+        // Access title and body from data
+        String title = message.data['title'] ?? 'New Notification';
+        String body = message.data['body'] ?? 'No message content';
+
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text(message.notification!.title ?? 'New Notification'),
-              content: Text(message.notification!.body ?? 'No message content'),
+              title: Text(title),
+              content: Text(body),
               actions: [
                 TextButton(
                   child: const Text('OK'),
@@ -107,10 +116,7 @@ class _FacilitatorHomeState extends State<FacilitatorHome> {
                 subtitle: const Text('Edit and manage available food items'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ManageFoodMenu()),
-                  );
+                  navi(context, ManageFoodMenu());
                 },
               ),
             ),
@@ -130,10 +136,7 @@ class _FacilitatorHomeState extends State<FacilitatorHome> {
                 subtitle: const Text('View new food requests'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => FoodRequest()),
-                  );
+                  navi(context, FoodRequest());
                 },
               ),
             ),
@@ -153,10 +156,7 @@ class _FacilitatorHomeState extends State<FacilitatorHome> {
                 subtitle: const Text('Check past food requests'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => PastRequests()),
-                  );
+                  navi(context, PastRequests());
                 },
               ),
             ),
