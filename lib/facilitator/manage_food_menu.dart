@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icon_snackbar/flutter_icon_snackbar.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart'; // For picking images
 
 class ManageFoodMenu extends StatelessWidget {
@@ -29,10 +30,15 @@ class ManageFoodMenu extends StatelessWidget {
           ],
         ),
         floatingActionButton: FloatingActionButton(
+          elevation: 0,
           onPressed: () {
             _showAddFoodDialog(context); // Call the dialog function
           },
           child: const Icon(Icons.add),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+                30.0), // Adjust the value for the desired roundness
+          ),
         ),
       ),
     );
@@ -188,9 +194,15 @@ class _TodaysMenuPageState extends State<TodaysMenuPage> {
                       const Text('Select All'),
                     ],
                   ),
-                  ElevatedButton(
-                    onPressed: _selectedItems.isEmpty ? null : _bulkDelete,
-                    child: const Text('Delete Selected'),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ElevatedButton(
+                      onPressed: _selectedItems.isEmpty ? null : _bulkDelete,
+                      child: const Text(
+                        'Delete Selected',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -243,12 +255,9 @@ class _TodaysMenuPageState extends State<TodaysMenuPage> {
                             .doc(item.id)
                             .delete();
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Item deleted successfully!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                        IconSnackBar.show(context,
+                            label: 'Item deleted successfully!',
+                            snackBarType: SnackBarType.success);
                       }
                     },
                   );
@@ -294,12 +303,9 @@ class _TodaysMenuPageState extends State<TodaysMenuPage> {
         _selectAll = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Selected items deleted successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      IconSnackBar.show(context,
+          label: 'Selected items deleted successfully!',
+          snackBarType: SnackBarType.success);
     }
   }
 }
@@ -398,6 +404,7 @@ class _SavedMenuPageState extends State<SavedMenuPage> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
@@ -470,10 +477,22 @@ class _SavedMenuPageState extends State<SavedMenuPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton(
-            onPressed: _moveToTodaysMenu,
-            child: const Text('Move to Today\'s Menu'),
+          padding: const EdgeInsets.all(20),
+          child: SizedBox(
+            width: 250.w,
+            height: 45.h,
+            child: ElevatedButton(
+              onPressed: _moveToTodaysMenu,
+              child: const Text(
+                'Move to Today\'s Menu',
+                style:
+                    TextStyle(color: Colors.white), // Set text color to white
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    Colors.orange, // Set background color to orange
+              ),
+            ),
           ),
         ),
       ],
